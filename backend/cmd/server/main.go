@@ -14,6 +14,7 @@ import (
 	"github.com/JaterFor/sobutylnik/backend/internal/auth"
 	"github.com/JaterFor/sobutylnik/backend/internal/config"
 	"github.com/JaterFor/sobutylnik/backend/internal/db"
+	"github.com/JaterFor/sobutylnik/backend/internal/profile"
 )
 
 func main() {
@@ -58,6 +59,22 @@ func main() {
 		ar.Post("/login", authService.HandleLogin)
 		ar.Post("/refresh", authService.HandleRefresh)
 		ar.Post("/logout", authService.HandleLogout)
+	})
+
+	profileRepo := profile.NewRepo(pool)
+	r2Storage := profile.NewR2Storage(cfg.R2AccountID, cfg.R2AccessKeyID, cfg.R2SecretAccessKey, cfg.R2Bucket, cfg.R2PublicBaseURL)
+	profileService := profile.NewService(profileRepo, r2Storage)
+
+	r.Route("/profile", func(pr chi.Router) {
+		pr.Use(authService.RequireAuth)
+		pr.Get("/", profileService.HandleGet)
+		pr.Put("/", profileService.HandleUpsert)
+		pr.Put("/location", profileService.HandleUpdateLocation)
+		pr.Post("/photos/presign", profileService.HandlePresignPhoto)
+		pr.Post("/photos/confirm", profileService.HandleConfirmPhoto)
+		pr.Delete("/photos/{photoID}", func(w http.ResponseWriter, r *http.Request) {
+			profileService.HandleDeletePhoto(w, r, chi.URLParam(r, "photoID"))
+		})
 	})
 
 	srv := &http.Server{
