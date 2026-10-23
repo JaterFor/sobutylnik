@@ -10,3 +10,11 @@ build/
 *.key
 .DS_Store
 coverage/
+
+# Go
+/backend/sobutylnik-server
+/backend/*.exe
+/backend/tmp/
+
+# graphify
+graphify-out/

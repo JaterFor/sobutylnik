@@ -70,7 +70,7 @@ Access-токен — короткоживущий JWT, refresh-токен — �
 2. Установить и сконфигурировать PostgreSQL + расширение PostGIS с урезанными параметрами памяти
 3. Прогнать миграции схемы БД
 4. Собрать и задеплоить Go-бинарник backend как systemd-сервис
-5. Настроить reverse proxy (nginx) + TLS (Let's Encrypt/certbot) перед backend
+5. Настроить reverse proxy (nginx) перед backend по HTTP; TLS (Let's Encrypt/certbot) отложен до появления домена (Let's Encrypt не выдаёт сертификат на голый IP) — добавляется отдельным change
 6. Прогнать health-check и smoke-тест ключевых эндпоинтов (auth, profile, feed, match, chat, moderation, notifications)
 
 Откат (rollback): если задеплоенная версия backend нестабильна — остановить systemd-сервис, вернуть предыдущий бинарник (хранить N последних сборок на диске) и перезапустить; миграции схемы БД пишутся обратимыми (down-миграции) на случай отката схемы.
