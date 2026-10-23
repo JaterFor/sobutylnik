@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/JaterFor/sobutylnik/backend/internal/auth"
 	"github.com/JaterFor/sobutylnik/backend/internal/config"
 	"github.com/JaterFor/sobutylnik/backend/internal/db"
 )
@@ -45,6 +46,18 @@ func main() {
 		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
+	})
+
+	authRepo := auth.NewRepo(pool)
+	jwtService := auth.NewJWTService(cfg.JWTAccessSecret, cfg.JWTRefreshSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
+	authService := auth.NewService(authRepo, jwtService, cfg.TelegramBotToken)
+
+	r.Route("/auth", func(ar chi.Router) {
+		ar.Post("/telegram", authService.HandleTelegramLogin)
+		ar.Post("/register", authService.HandleRegister)
+		ar.Post("/login", authService.HandleLogin)
+		ar.Post("/refresh", authService.HandleRefresh)
+		ar.Post("/logout", authService.HandleLogout)
 	})
 
 	srv := &http.Server{
