@@ -14,6 +14,9 @@ import (
 	"github.com/JaterFor/sobutylnik/backend/internal/auth"
 	"github.com/JaterFor/sobutylnik/backend/internal/config"
 	"github.com/JaterFor/sobutylnik/backend/internal/db"
+	"github.com/JaterFor/sobutylnik/backend/internal/feed"
+	matchpkg "github.com/JaterFor/sobutylnik/backend/internal/match"
+	"github.com/JaterFor/sobutylnik/backend/internal/moderation"
 	"github.com/JaterFor/sobutylnik/backend/internal/profile"
 )
 
@@ -75,6 +78,35 @@ func main() {
 		pr.Delete("/photos/{photoID}", func(w http.ResponseWriter, r *http.Request) {
 			profileService.HandleDeletePhoto(w, r, chi.URLParam(r, "photoID"))
 		})
+	})
+
+	matchRepo := matchpkg.NewRepo(pool)
+	matchService := matchpkg.NewService(matchRepo)
+
+	moderationRepo := moderation.NewRepo(pool, cfg.ReportBanThreshold)
+	moderationService := moderation.NewService(moderationRepo, matchRepo)
+
+	feedRepo := feed.NewRepo(pool)
+	feedService := feed.NewService(feedRepo, matchRepo, nil, moderationRepo) // notifier wired in once notify package exists
+
+	r.Route("/feed", func(fr chi.Router) {
+		fr.Use(authService.RequireAuth)
+		fr.Get("/", feedService.HandleGetFeed)
+		fr.Post("/swipe", feedService.HandleSwipe)
+	})
+
+	r.Route("/matches", func(mr chi.Router) {
+		mr.Use(authService.RequireAuth)
+		mr.Get("/", matchService.HandleList)
+		mr.Post("/{matchID}/unmatch", func(w http.ResponseWriter, r *http.Request) {
+			matchService.HandleUnmatch(w, r, chi.URLParam(r, "matchID"))
+		})
+	})
+
+	r.Route("/moderation", func(mdr chi.Router) {
+		mdr.Use(authService.RequireAuth)
+		mdr.Post("/report", moderationService.HandleReport)
+		mdr.Post("/block", moderationService.HandleBlock)
 	})
 
 	srv := &http.Server{
