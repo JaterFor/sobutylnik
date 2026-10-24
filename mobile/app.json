@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Собутыльник",
+    "slug": "sobutylnik",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#121212",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Нужно для показа собутыльников рядом с вами",
+        "NSPhotoLibraryUsageDescription": "Нужно для загрузки фото профиля"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#121212",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Нужно для показа собутыльников рядом с вами"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Нужно для загрузки фото профиля"
+        }
+      ]
+    ]
+  }
+}
