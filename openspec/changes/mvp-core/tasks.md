@@ -5,7 +5,7 @@
 - [x] 1.1 Создать и подключить swap-файл (1-2GB) на VPS, проверить через `free -h`, что swap активен
 - [x] 1.2 Установить PostgreSQL с расширением PostGIS, задать урезанные параметры памяти (`shared_buffers`, `work_mem`, `max_connections`) под 1GB RAM, проверить `pg_isready` и `SELECT PostGIS_version();`
 - [x] 1.3 Настроить nginx как reverse proxy по HTTP (TLS через certbot отложен — нет домена, Let's Encrypt не выдаёт сертификат на голый IP; добавить TLS отдельной задачей, когда появится домен), проверить, что HTTP-запрос к placeholder-эндпоинту проходит
-- [ ] 1.4 Настроить systemd unit-файл для backend-бинарника (автозапуск, перезапуск при падении), проверить `systemctl status`
+- [x] 1.4 Настроить systemd unit-файл для backend-бинарника (автозапуск, перезапуск при падении), проверить `systemctl status`
 
 ## 2. Backend: база и инфраструктурный код
 
