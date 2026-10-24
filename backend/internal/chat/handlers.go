@@ -20,6 +20,7 @@ type matchAccessor interface {
 
 type blockChecker interface {
 	IsBlocked(ctx context.Context, userA, userB string) (bool, error)
+	IsRestricted(ctx context.Context, userID string) (bool, error)
 }
 
 // messageNotifier is called when a message is sent to a recipient with no
@@ -193,6 +194,18 @@ func (s *Service) HandleSend(w http.ResponseWriter, r *http.Request, matchID str
 		}
 		if blocked {
 			writeError(w, http.StatusForbidden, "cannot send messages in this match")
+			return
+		}
+
+		// moderation spec: a user auto-restricted after crossing the report
+		// threshold loses the ability to send messages, not just feed visibility.
+		restricted, err := s.blocks.IsRestricted(r.Context(), userID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "could not check restriction status")
+			return
+		}
+		if restricted {
+			writeError(w, http.StatusForbidden, "cannot send messages")
 			return
 		}
 	}
