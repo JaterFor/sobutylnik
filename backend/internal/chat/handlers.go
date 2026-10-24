@@ -22,16 +22,24 @@ type blockChecker interface {
 	IsBlocked(ctx context.Context, userA, userB string) (bool, error)
 }
 
-type Service struct {
-	repo    *Repo
-	matches matchAccessor
-	blocks  blockChecker
-	hub     *Hub
-	jwt     *auth.JWTService
+// messageNotifier is called when a message is sent to a recipient with no
+// live WebSocket connection, so main can wire in push delivery without chat
+// depending on the notify package directly.
+type messageNotifier interface {
+	NotifyNewMessage(ctx context.Context, recipientID, senderID, matchID string)
 }
 
-func NewService(repo *Repo, matches matchAccessor, blocks blockChecker, hub *Hub, jwt *auth.JWTService) *Service {
-	return &Service{repo: repo, matches: matches, blocks: blocks, hub: hub, jwt: jwt}
+type Service struct {
+	repo     *Repo
+	matches  matchAccessor
+	blocks   blockChecker
+	hub      *Hub
+	jwt      *auth.JWTService
+	notifier messageNotifier
+}
+
+func NewService(repo *Repo, matches matchAccessor, blocks blockChecker, hub *Hub, jwt *auth.JWTService, notifier messageNotifier) *Service {
+	return &Service{repo: repo, matches: matches, blocks: blocks, hub: hub, jwt: jwt, notifier: notifier}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
@@ -199,10 +207,9 @@ func (s *Service) HandleSend(w http.ResponseWriter, r *http.Request, matchID str
 	resp := toMessageResponse(*msg)
 	if s.hub.IsOnline(otherUserID) {
 		s.hub.Send(otherUserID, "new_message", resp)
+	} else if s.notifier != nil {
+		s.notifier.NotifyNewMessage(r.Context(), otherUserID, userID, matchID)
 	}
-	// If the recipient is offline, the message is already persisted and will
-	// be returned by HandleHistory on their next fetch; push notification
-	// delivery is wired in by the notify package (see main.go).
 
 	writeJSON(w, http.StatusCreated, resp)
 }

@@ -23,9 +23,9 @@ func NewR2Storage(accountID, accessKeyID, secretAccessKey, bucket, publicBaseURL
 	endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)
 
 	client := s3.New(s3.Options{
-		Region:      "auto",
+		Region:       "auto",
 		BaseEndpoint: aws.String(endpoint),
-		Credentials: credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, ""),
+		Credentials:  credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, ""),
 	})
 
 	return &R2Storage{

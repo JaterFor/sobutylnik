@@ -10,14 +10,14 @@ import (
 type Config struct {
 	HTTPAddr string
 
-	DatabaseURL     string
-	DBMaxConns      int32
-	DBConnTimeout   time.Duration
+	DatabaseURL   string
+	DBMaxConns    int32
+	DBConnTimeout time.Duration
 
-	JWTAccessSecret    string
-	JWTRefreshSecret   string
-	JWTAccessTTL       time.Duration
-	JWTRefreshTTL      time.Duration
+	JWTAccessSecret  string
+	JWTRefreshSecret string
+	JWTAccessTTL     time.Duration
+	JWTRefreshTTL    time.Duration
 
 	TelegramBotToken string
 

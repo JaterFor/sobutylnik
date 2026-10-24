@@ -18,6 +18,7 @@ import (
 	"github.com/JaterFor/sobutylnik/backend/internal/feed"
 	matchpkg "github.com/JaterFor/sobutylnik/backend/internal/match"
 	"github.com/JaterFor/sobutylnik/backend/internal/moderation"
+	"github.com/JaterFor/sobutylnik/backend/internal/notify"
 	"github.com/JaterFor/sobutylnik/backend/internal/profile"
 )
 
@@ -87,8 +88,14 @@ func main() {
 	moderationRepo := moderation.NewRepo(pool, cfg.ReportBanThreshold)
 	moderationService := moderation.NewService(moderationRepo, matchRepo)
 
+	chatHub := chat.NewHub()
+
+	notifyRepo := notify.NewRepo(pool)
+	expoClient := notify.NewExpoClient(cfg.ExpoPushAccessToken)
+	notifyService := notify.NewService(notifyRepo, expoClient, profileRepo, chatHub)
+
 	feedRepo := feed.NewRepo(pool)
-	feedService := feed.NewService(feedRepo, matchRepo, nil, moderationRepo) // notifier wired in once notify package exists
+	feedService := feed.NewService(feedRepo, matchRepo, notifyService, moderationRepo)
 
 	r.Route("/feed", func(fr chi.Router) {
 		fr.Use(authService.RequireAuth)
@@ -111,8 +118,7 @@ func main() {
 	})
 
 	chatRepo := chat.NewRepo(pool)
-	chatHub := chat.NewHub()
-	chatService := chat.NewService(chatRepo, matchRepo, moderationRepo, chatHub, jwtService)
+	chatService := chat.NewService(chatRepo, matchRepo, moderationRepo, chatHub, jwtService, notifyService)
 
 	r.Get("/chat/ws", chatService.HandleWebSocket)
 	r.Route("/chat/{matchID}", func(cr chi.Router) {
@@ -123,6 +129,11 @@ func main() {
 		cr.Post("/messages", func(w http.ResponseWriter, r *http.Request) {
 			chatService.HandleSend(w, r, chi.URLParam(r, "matchID"))
 		})
+	})
+
+	r.Route("/notifications", func(nr chi.Router) {
+		nr.Use(authService.RequireAuth)
+		nr.Post("/register-token", notifyService.HandleRegisterToken)
 	})
 
 	srv := &http.Server{

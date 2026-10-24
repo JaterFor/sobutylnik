@@ -20,6 +20,17 @@ func NewRepo(pool *pgxpool.Pool) *Repo {
 	return &Repo{pool: pool}
 }
 
+// GetName returns just the display name, for lightweight lookups (e.g.
+// notification text) that don't need the full profile.
+func (r *Repo) GetName(ctx context.Context, userID string) (string, error) {
+	var name string
+	err := r.pool.QueryRow(ctx, `SELECT name FROM profiles WHERE user_id = $1`, userID).Scan(&name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return name, err
+}
+
 func (r *Repo) Get(ctx context.Context, userID string) (*Profile, error) {
 	row := r.pool.QueryRow(ctx, `
 		SELECT user_id, name, age, gender, bio, preferred_drink, readiness_status,

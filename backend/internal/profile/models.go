@@ -28,9 +28,9 @@ type Photo struct {
 }
 
 const (
-	MaxPhotos     = 3
-	MaxBioLength  = 500
-	MinAge        = 18
+	MaxPhotos    = 3
+	MaxBioLength = 500
+	MinAge       = 18
 )
 
 var validGenders = map[string]bool{"male": true, "female": true, "other": true}
