@@ -29,15 +29,23 @@ type blockChecker interface {
 	IsBlocked(ctx context.Context, userA, userB string) (bool, error)
 }
 
+// photoURLResolver turns a stored object key into a publicly fetchable URL
+// (backed by profile.R2Storage), so candidate photos render the same way
+// GET /profile's do.
+type photoURLResolver interface {
+	PublicURL(objectKey string) string
+}
+
 type Service struct {
 	repo     *Repo
 	matches  matcher
 	notifier matchNotifier
 	blocks   blockChecker
+	photos   photoURLResolver
 }
 
-func NewService(repo *Repo, matches matcher, notifier matchNotifier, blocks blockChecker) *Service {
-	return &Service{repo: repo, matches: matches, notifier: notifier, blocks: blocks}
+func NewService(repo *Repo, matches matcher, notifier matchNotifier, blocks blockChecker, photos photoURLResolver) *Service {
+	return &Service{repo: repo, matches: matches, notifier: notifier, blocks: blocks, photos: photos}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
@@ -111,6 +119,10 @@ func (s *Service) HandleGetFeed(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]candidateResponse, 0, len(candidates))
 	for _, c := range candidates {
+		photoURLs := make([]string, 0, len(c.Photos))
+		for _, objectKey := range c.Photos {
+			photoURLs = append(photoURLs, s.photos.PublicURL(objectKey))
+		}
 		resp = append(resp, candidateResponse{
 			UserID:          c.UserID,
 			Name:            c.Name,
@@ -119,7 +131,7 @@ func (s *Service) HandleGetFeed(w http.ResponseWriter, r *http.Request) {
 			Bio:             c.Bio,
 			ReadinessStatus: c.ReadinessStatus,
 			DistanceKm:      c.DistanceMeters / 1000,
-			Photos:          c.Photos,
+			Photos:          photoURLs,
 		})
 	}
 	writeJSON(w, http.StatusOK, resp)

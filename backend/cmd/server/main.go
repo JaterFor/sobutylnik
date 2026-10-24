@@ -83,7 +83,7 @@ func main() {
 	})
 
 	matchRepo := matchpkg.NewRepo(pool)
-	matchService := matchpkg.NewService(matchRepo)
+	matchService := matchpkg.NewService(matchRepo, profileRepo, r2Storage)
 
 	moderationRepo := moderation.NewRepo(pool, cfg.ReportBanThreshold)
 	moderationService := moderation.NewService(moderationRepo, matchRepo)
@@ -95,7 +95,7 @@ func main() {
 	notifyService := notify.NewService(notifyRepo, expoClient, profileRepo, chatHub)
 
 	feedRepo := feed.NewRepo(pool)
-	feedService := feed.NewService(feedRepo, matchRepo, notifyService, moderationRepo)
+	feedService := feed.NewService(feedRepo, matchRepo, notifyService, moderationRepo, r2Storage)
 
 	r.Route("/feed", func(fr chi.Router) {
 		fr.Use(authService.RequireAuth)

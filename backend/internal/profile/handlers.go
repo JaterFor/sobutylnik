@@ -36,16 +36,22 @@ func requireUserID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return userID, true
 }
 
+type photoResponse struct {
+	ID        string `json:"id"`
+	URL       string `json:"url"`
+	IsPrimary bool   `json:"is_primary"`
+}
+
 type profileResponse struct {
-	UserID          string   `json:"user_id"`
-	Name            string   `json:"name"`
-	Age             int      `json:"age"`
-	Gender          string   `json:"gender"`
-	Bio             string   `json:"bio"`
-	PreferredDrink  *string  `json:"preferred_drink,omitempty"`
-	ReadinessStatus string   `json:"readiness_status"`
-	HasLocation     bool     `json:"has_location"`
-	Photos          []string `json:"photos"`
+	UserID          string          `json:"user_id"`
+	Name            string          `json:"name"`
+	Age             int             `json:"age"`
+	Gender          string          `json:"gender"`
+	Bio             string          `json:"bio"`
+	PreferredDrink  *string         `json:"preferred_drink,omitempty"`
+	ReadinessStatus string          `json:"readiness_status"`
+	HasLocation     bool            `json:"has_location"`
+	Photos          []photoResponse `json:"photos"`
 }
 
 func (s *Service) toResponse(r *http.Request, p *Profile) (profileResponse, error) {
@@ -53,9 +59,13 @@ func (s *Service) toResponse(r *http.Request, p *Profile) (profileResponse, erro
 	if err != nil {
 		return profileResponse{}, err
 	}
-	urls := make([]string, 0, len(photos))
+	photoResp := make([]photoResponse, 0, len(photos))
 	for _, ph := range photos {
-		urls = append(urls, s.storage.PublicURL(ph.ObjectKey))
+		photoResp = append(photoResp, photoResponse{
+			ID:        ph.ID,
+			URL:       s.storage.PublicURL(ph.ObjectKey),
+			IsPrimary: ph.IsPrimary,
+		})
 	}
 	return profileResponse{
 		UserID:          p.UserID,
@@ -66,7 +76,7 @@ func (s *Service) toResponse(r *http.Request, p *Profile) (profileResponse, erro
 		PreferredDrink:  p.PreferredDrink,
 		ReadinessStatus: p.ReadinessStatus,
 		HasLocation:     p.HasLocation,
-		Photos:          urls,
+		Photos:          photoResp,
 	}, nil
 }
 

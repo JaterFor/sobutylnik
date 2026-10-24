@@ -31,6 +31,20 @@ func (r *Repo) GetName(ctx context.Context, userID string) (string, error) {
 	return name, err
 }
 
+// GetCard returns the name and primary-photo object key for a lightweight
+// "who is this" card (e.g. a match list row), without the full profile.
+func (r *Repo) GetCard(ctx context.Context, userID string) (name string, primaryPhotoKey *string, err error) {
+	err = r.pool.QueryRow(ctx, `
+		SELECT p.name, pp.object_key
+		FROM profiles p
+		LEFT JOIN profile_photos pp ON pp.user_id = p.user_id AND pp.is_primary
+		WHERE p.user_id = $1`, userID).Scan(&name, &primaryPhotoKey)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil, ErrNotFound
+	}
+	return name, primaryPhotoKey, err
+}
+
 func (r *Repo) Get(ctx context.Context, userID string) (*Profile, error) {
 	row := r.pool.QueryRow(ctx, `
 		SELECT user_id, name, age, gender, bio, preferred_drink, readiness_status,
