@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/JaterFor/sobutylnik/backend/internal/auth"
+	"github.com/JaterFor/sobutylnik/backend/internal/chat"
 	"github.com/JaterFor/sobutylnik/backend/internal/config"
 	"github.com/JaterFor/sobutylnik/backend/internal/db"
 	"github.com/JaterFor/sobutylnik/backend/internal/feed"
@@ -107,6 +108,21 @@ func main() {
 		mdr.Use(authService.RequireAuth)
 		mdr.Post("/report", moderationService.HandleReport)
 		mdr.Post("/block", moderationService.HandleBlock)
+	})
+
+	chatRepo := chat.NewRepo(pool)
+	chatHub := chat.NewHub()
+	chatService := chat.NewService(chatRepo, matchRepo, moderationRepo, chatHub, jwtService)
+
+	r.Get("/chat/ws", chatService.HandleWebSocket)
+	r.Route("/chat/{matchID}", func(cr chi.Router) {
+		cr.Use(authService.RequireAuth)
+		cr.Get("/messages", func(w http.ResponseWriter, r *http.Request) {
+			chatService.HandleHistory(w, r, chi.URLParam(r, "matchID"))
+		})
+		cr.Post("/messages", func(w http.ResponseWriter, r *http.Request) {
+			chatService.HandleSend(w, r, chi.URLParam(r, "matchID"))
+		})
 	})
 
 	srv := &http.Server{
