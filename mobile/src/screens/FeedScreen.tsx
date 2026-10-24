@@ -9,6 +9,20 @@ import { colors } from '../theme/colors';
 
 const SWIPE_THRESHOLD = 120;
 
+const GENDER_OPTIONS: Array<{ value: string | undefined; label: string }> = [
+  { value: undefined, label: 'Любой пол' },
+  { value: 'male', label: 'Мужчины' },
+  { value: 'female', label: 'Женщины' },
+  { value: 'other', label: 'Другое' },
+];
+
+const READINESS_OPTIONS: Array<{ value: string | undefined; label: string }> = [
+  { value: undefined, label: 'Любая готовность' },
+  { value: 'now', label: 'Сейчас' },
+  { value: 'today', label: 'Сегодня' },
+  { value: 'this_week', label: 'На неделе' },
+];
+
 interface Props {
   onMatch: (matchId: string) => void;
 }
@@ -122,6 +136,34 @@ export function FeedScreen({ onMatch }: Props) {
             onPress={() => setFilter({ ...filter, radiusKm: r })}
           >
             <Text style={filter.radiusKm === r ? styles.filterChipTextActive : styles.filterChipText}>{r} км</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.filterRow}>
+        {GENDER_OPTIONS.map((g) => (
+          <TouchableOpacity
+            key={g.value ?? 'any'}
+            style={[styles.filterChip, filter.gender === g.value && styles.filterChipActive]}
+            onPress={() => setFilter({ ...filter, gender: g.value })}
+          >
+            <Text style={filter.gender === g.value ? styles.filterChipTextActive : styles.filterChipText}>
+              {g.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.filterRow}>
+        {READINESS_OPTIONS.map((r) => (
+          <TouchableOpacity
+            key={r.value ?? 'any'}
+            style={[styles.filterChip, filter.readiness === r.value && styles.filterChipActive]}
+            onPress={() => setFilter({ ...filter, readiness: r.value })}
+          >
+            <Text style={filter.readiness === r.value ? styles.filterChipTextActive : styles.filterChipText}>
+              {r.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
